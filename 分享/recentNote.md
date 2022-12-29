@@ -371,7 +371,7 @@ watch(
 
 当你更改了响应式状态，它可能会同时触发 Vue 组件更新和侦听器回调。
 
-默认情况下，用户创建的侦听器回调，都会在 Vue 组件更新**之前**被调用。这意味着你在侦听器回调中访问的 DOM 将是被 Vue 更新之前的状态。
+默认情况下，用户创建的侦听器回调，都会在 Vue 组件更新**之前**被调用。这意味着你在侦听器                  回调中访问的 DOM 将是被 Vue 更新之前的状态。
 
 如果想在侦听器回调中能访问被 Vue 更新**之后**的 DOM，你需要指明 `flush: 'post'` 选项：
 
@@ -759,19 +759,168 @@ definePageMeta({
 
 
 
+# [Astro]([入门指南 🚀 Astro 文档](https://docs.astro.build/zh-cn/getting-started/))
+
+Astro 是**集多功能于一体的Web框架**，用于构建快速、以内容为中心的网站。
+
+## 特点
+
+[Section titled Astro是…](https://docs.astro.build/zh-cn/concepts/why-astro/#astro是)
+
+1. [**以内容为中心** ](https://docs.astro.build/zh-cn/concepts/why-astro/#以内容为中心)：Astro 专为内容丰富的网站而设计。
+2. [**服务器优先** ](https://docs.astro.build/zh-cn/concepts/why-astro/#服务器优先)：网站在服务器上渲染 HTML 时运行速度更快。
+3. [**默认快速** ](https://docs.astro.build/zh-cn/concepts/why-astro/#默认快速)：在 Astro 中构建缓慢的网站是不可能的。
+4. [**易于使用** ](https://docs.astro.build/zh-cn/concepts/why-astro/#易于使用)：您不需要成为专家即可使用 Astro 构建某些内容。
+5. [**功能齐全且灵活** ](https://docs.astro.build/zh-cn/concepts/why-astro/#功能齐全且灵活)：超100多种 Astro 集成可供选择。
+
+> 个人观点：Astro并不是类似React、Vue、Svelte这样的JavaScript框架，相反他主张干掉js，全部生成静态页面，达到快速启动，不过也是可以运行js的，可以做SSR这些功能。更像是一个HTML生成器，ta以内容为中心，十分适合文档网站、博客、个人作品集这类不需要太多交互，更关注内容的网站。可以说是搭建个人博客网站的神器！
 
 
 
+## 多页面应用（MPA）
+
+Astro 是一个 MPA 框架。 然而，Astro 也不同于其他 MPA 框架。 它的主要区别在于它使用 JavaScript 作为其服务器语言和运行时。 传统的 MPA 框架会让您在服务器上编写不同的语言（Ruby、PHP 等）并在浏览器上编写 JavaScript。 在 Astro 中，您总是只是在编写 JavaScript、HTML 和 CSS。 这样，您可以在服务器和客户端上呈现您的 UI 组件（如 React 和 Svelte）。
+
+其结果是开发人员体验很像 Next.js 和其他现代 Web 框架，但具有更传统的 MPA 站点架构的性能特征。
+
+## Astro群岛（核心）
+
+“Astro 群岛“指的是静态 HTML 中的交互性的 UI 组件。一个页面上可以有多个岛屿，并且每个岛屿都被独立呈现。你可以将它们想象成在一片由静态（不可交互）的 HTML 页面中的动态岛屿。
+
+在Astro中，你可以使用任何被支持的UI框架（比如 React, Svelte, Vue）来在浏览器中呈现群岛。你可以在一个页面中混合或拼接许多不同的框架，或者仅仅使用自己最喜欢的。
+
+这种架构模式依赖于 partial（局部）或 selective hydration（选择性混合）技术。
+
+**Astro 默认生成不含客户端 JavaScript 的网站。** 如果使用前端框架 [React](https://reactjs.org/)、[Preact](https://preactjs.com/)、[Svelte](https://svelte.dev/)、[Vue](https://vuejs.org/)、[SolidJS](https://www.solidjs.com/)、[AlpineJS](https://alpinejs.dev/) 或 [Lit](https://lit.dev/)，Astro 会自动提前将它们渲染为 HTML，然后再除去所有 JavaScript。这使得 Astro 创建的网站默认非常迅速，因为 Astro 帮你自动清除了所有页面上的 JavaScript。
+
+src/pages/index.astro
+
+```tsx
+---
+// 例子：在此页面使用一个静态的 React 组件，没有 JavaScript。
+import MyReactComponent from '../components/MyReactComponent.jsx';
+---
+<!-- 100% HTML，没有 JavaScript 在这个页面上！ -->
+<MyReactComponent />
+```
+
+但是有些时候，响应式的 UI 是需要客户端 JavaScript 的。你不该将整个页面做成一个像 SPA（单页面应用）一样的 JavaScript 应用，相反，Astro 允许你创建岛屿。
+
+src/pages/index.astro
+
+```tsx
+---
+// 例子：在此页面上使用一个动态 React 组件
+---
+<!-- 现在这个组件是可交互性的了！
+  网站的其他部分仍然是静态、没有JavaScript的。 -->
+<MyReactComponent client:load />
+```
+
+使用 Astro 群岛，你的大部分页面保持着纯正、轻盈的HTML和CSS。在上面的例子中，你仅仅添加了一个简单的、孤立的**可响应岛屿**，而并没有改变任何页面其他部分的代码。
+
+Astro 群岛的最明显的好处就是性能：你网站的大部分区域都被转换为了快速、静态的 HTML，JavaScript 只为单独组件而被加载。JavaScript 是一个加载得最慢的资源。每一个字节都影响着阅读者的体验！
+
+另一个好处是并行加载。在上面的一些假想例子中，重要性更低的图像轮播不应该阻挡更重要的页头部分的加载。这两样东西被并行加载并被分别单独组建，这表明阅读者并不需要等着更沉重的图像轮播加载完毕就可以与页头交互了。
+
+还有更棒的：你可以准确地告诉 Astro 如何以及何时渲染每个组件。如果该图像轮播的加载成本真的很高，你可以附加一个特殊的客户端指令，告诉 Astro 仅在轮播在页面上可见时才加载它。如果用户从未看到它，它永远不会被加载。
+
+在 Astro 中，作为开发人员，你可以明确告诉 Astro 你的页面上的哪些组件也需要在客户端浏览器中运行。Astro 只会准确地补充页面上需要交互性的内容，并将您网站的其余部分保留为静态 HTML。
+
+## [MarkDown（十分适合文档和博客的feature）]([Markdown 🚀 Astro 文档](https://docs.astro.build/zh-cn/guides/markdown-content/#导入-markdown))）
+
+Astro可以自动将page目录下的.md文件解析成HTML页面，还可以将.md文件提取成组件，嵌入到页面当中，可以说是写笔记、写博客的利器。
+
+### Markdown 页面
+
+Astro 将 `/src/pages` 目录中的任一 `.md` 文件视为一个页面。将文件放在此目录或其的任何一个子目录中，则将用文件的路径名自动构建页面路由。
+
+### Markdown 布局
+
+[Section titled Markdown 布局](https://docs.astro.build/zh-cn/guides/markdown-content/#markdown-布局)
+
+Markdown 页面有一个用于指定 `layout` 的特殊 frontmatter 属性，它定义了 Astro [布局组件](https://docs.astro.build/zh-cn/core-concepts/layouts/)的相对路径。该组件将包装你的 Markdown 内容，提供页面骨架和任何其他包含的页面模板元素。
+
+```tsx
+---
+layout: ../layouts/BaseLayout.astro
+---
+```
+
+Markdown 页面指定布局的方式有：
+
+1. 通过 content 属性访问 Markdown 页面的 frontmatter 数据。
+2. [``](https://docs.astro.build/zh-cn/core-concepts/astro-components/#插槽) 将指定 Markdown 内容的默认显示位置。
+
+src/layouts/BaseLayout.astro
+
+```tsx
+---
+// 1. The content prop gives access to frontmatter data
+const { content } = Astro.props;
+---
+<html>
+  <head>
+    <!-- Add other Head elements here, like styles and meta tags. -->
+    <title>{content.title}</title>
+  </head>
+  <body>
+    <!-- Add other UI components here, like common headers and footers. -->
+    <h1>{content.title} by {content.author}</h1>
+    <!-- 2. Rendered HTML will be passed into the default slot. -->
+    <slot />
+    <p>Written on: {content.date}</p>
+  </body>
+</html>
+```
+
+`content` 属性还包含一个 `astro` 属性，其中包含有关页面的其他元数据，例如完整的 Markdown `source` 和 `headers` 对象。
+
+一个示例博客文章 `content` 对象，类似于下方示例：
+
+```json
+{
+  /** Frontmatter from a blog post
+  "title": "Astro 0.18 Release",
+  "date": "Tuesday, July 27 2021",
+  "author": "Matthew Phillips",
+  "description": "Astro 0.18 is our biggest release since Astro launch.",
+  "draft": false,
+  "keywords": ["astro", "release", "announcement"]
+  **/
+  "astro": {
+    "headers": [
+      {
+        "depth": 1,
+        "text": "Astro 0.18 Release",
+        "slug": "astro-018-release"
+      },
+      {
+        "depth": 2,
+        "text": "Responsive partial hydration",
+        "slug": "responsive-partial-hydration"
+      }
+      /* ... */
+    ],
+    "source": "# Astro 0.18 Release\nA little over a month ago, the first public beta [...]"
+  },
+  "url": ""
+}
+```
+
+> 💡 `content` 属性中的 `astro` 和 `url` 是唯一受到 Astro 保护的属性。对象的其余部分则由你的 frontmatter 变量定义。
 
 
 
+**你甚至可以在MarkDown当中使用变量和嵌入组件**
 
 
 
+**本人已经尝试了，使用Netlify部署一个最简单的Astro搭建的博客，真的好用！**
 
 
 
-
+https://hyacinth-ju.netlify.app/
 
 
 
