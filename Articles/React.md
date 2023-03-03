@@ -211,7 +211,11 @@ setState 并非真正异步，只是看上去像是一个异步。在源码中�
 
 ## Diff算法
 
-> 
+> 对比时机：setState Props Hooks
+>
+> 遍历算法：深度优先
+>
+> Fiber架构：双链表、双缓冲  指向父节点、下一个兄弟节点、下一个子节点，来实现可恢复中断，做异步渲染
 
 diff算法有如下三个策略：
 
@@ -246,7 +250,51 @@ diff算法有如下三个策略：
 
 
 
+## React的渲染流程
 
+### **v15x 之前**
+
+> 核心： Stack Reconciler
+>
+> 阶段： 挂载、更新、卸载
+>
+> 调度： 递归
+>
+> 事务： 原子性、隔离性、一致性；连接React与虚拟Dom并处理挂载、更新、卸载等逻辑
+
+
+
+**Stack Reconciler** 栈调和的核心调度方式是递归。调度的基本处理单位是 Transaction 事务，React 源码中有一个 Transaction 的基类，这个概念是 React 团队从后端开发中借鉴的概念，它能够保证协调过程中对状态操作的一致性和原子性。协调过程中，ReactMount 模块负责挂载， ReactUpdate 模块负责更新，各个模块之间相互分离，通过事务来驱动执行。
+
+
+
+### **v16x 之后**
+
+> 核心： Fiber Reconciler
+>
+> 阶段：
+>
+> - Render：
+>   - 可中断、可停止、无副作用
+>   - Fiber
+>   - Work
+>   - 双缓冲树
+> - Commit：
+>   - 更新Dom，执行副作用
+>   - 同步更新
+>
+> 调度： 协作式多任务模式 ———— requestIdleCallback（MessageChannel实现）； 优先级策略 ———— 标记tag。
+>
+> 优势： 提高React在动画、画布、手势等场景下的性能表现，复杂更新时避免卡顿，优化用户体验
+
+
+
+**Fiber Reconciler** 的调度方式有两个特点
+
+> - **协作式多任务模式**，在这个模式下，线程会定时放弃自己的运行权利，交还给主线程，通过 requestIdleCallback 实现。
+> - **策略优先级**，调度任务通过标记 tag 的方式分优先级执行，比如动画，或者标记为 high 的任务优先执行。
+> - Fiber Reconciler 的基本单位是 Fiber，基于过去的 React Element 提供了二次封装，提供了指向父、子、兄弟节点的引用，为 diff 工作的双链表实现提供了基础。在新的架构下，整个应用生命周期被划分为 Render 和 Commit 两个阶段。Render 阶段的执行特点是可中断、可停止、无副作用，主要是通过构造 workInProgress 树计算出 diff。以 current 树为基础，将每一个 Fiber 作为一个基本单位，自下而上逐个节点检查并构造 workInProgress 树。这个过程不再是递归，而是基于循环来完成的。
+> - 在执行上通过 requestIdleCallback 来调度执行每一组任务，每组中的每个计算任务又被称为 work，每个 work 完成后确认是否有更高优先级的 work 需要插入，如果有就让出位置，没有就继续执行。优先级通常是标记为动画或者 high 的会优先处理。每完成一组后，将调度权交回给浏览器主线程，直到下次 requestIdleCallback 调用，再继续构建 workInProgress 树。 在 commit 阶段需要处理 effect 列表，这里的 effect 列表包含了根据 diff 更新 DOM 树、回调生命周期、响应 ref 等等。 但要注意的是，这个阶段是同步执行的，不可中断暂停，因此不要在componentDidMout、componentDidUpdate、componentWillUnmout 中去执行重度消耗计算能力的任务。
 
 
 
